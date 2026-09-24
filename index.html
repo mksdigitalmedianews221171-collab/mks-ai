@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MKS AI Public</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#172033}
+header{background:#111b30;color:white;padding:24px 18px;text-align:center}h1{margin:0;font-size:32px}header p{margin:7px 0;opacity:.9}
+.wrap{max-width:1100px;margin:20px auto;padding:0 15px}.panel,.auth,.out{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 12px #0001;margin-bottom:15px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1}.right{margin-left:auto}
+input,textarea,select{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px;font-size:15px}textarea{min-height:160px;resize:vertical}
+button{border:0;border-radius:9px;padding:11px 15px;font-weight:700;cursor:pointer;background:#e6ecf4;color:#172033}button.primary{background:#1769d2;color:white}
+.tabs{display:flex;gap:8px;overflow:auto;margin-bottom:12px}.tabs button.active{background:#1769d2;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin:12px 0}.card{padding:12px;border:1px solid #e0e6ee;border-radius:10px;background:#fff;cursor:pointer}.card b{display:block}.small{font-size:12px;color:#697586}
+.out{white-space:pre-wrap;line-height:1.6;min-height:150px}.hide{display:none}.badge{padding:6px 10px;background:#eef3f9;border-radius:20px;font-size:13px}
+.notice{font-size:13px;color:#64748b}.error{color:#b42318}.success{color:#067647}
+@media(max-width:600px){h1{font-size:27px}}
+</style>
+</head>
+<body>
+<header><h1>🤖 MKS AI</h1><p>Public AI Assistant • YouTube • Advertising • Business • Learning</p></header>
+<div class="wrap">
+  <div id="auth" class="auth">
+    <div class="tabs"><button id="loginTab" class="active" onclick="showAuth('login')">Login</button><button id="signupTab" onclick="showAuth('signup')">Create Account</button></div>
+    <div id="loginBox">
+      <div class="grid"><input id="lemail" placeholder="Email"><input id="lpass" type="password" placeholder="Password"></div>
+      <button class="primary" onclick="login()">Login</button>
+    </div>
+    <div id="signupBox" class="hide">
+      <div class="grid"><input id="sname" placeholder="Name"><input id="semail" placeholder="Email"><input id="spass" type="password" placeholder="Password (8+ characters)"></div>
+      <button class="primary" onclick="signup()">Create Account</button>
+    </div>
+    <p id="authMsg" class="notice"></p>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="panel row"><span id="welcome"></span><span id="usage" class="badge"></span><button class="right" onclick="logout()">Logout</button></div>
+    <div class="panel">
+      <div class="tabs" id="modes"></div><div class="grid" id="presets"></div>
+      <textarea id="prompt" placeholder="अपना सवाल या काम लिखें..."></textarea>
+      <div class="row" style="margin-top:10px"><button class="primary" onclick="ask()">MKS AI से जवाब लें</button><button onclick="clearAll()">Clear</button><button onclick="copyAnswer()">Copy</button><button onclick="downloadAnswer()">Download .txt</button></div>
+    </div>
+    <div id="output" class="out">MKS AI तैयार है।</div>
+    <p class="notice">Free plan uses a monthly request limit. The website owner pays the AI API bill; users should never receive the server API key.</p>
+  </div>
+</div>
+<script>
+const modes={general:"💬 General",youtube:"🎬 YouTube Studio",advertising:"📢 Advertising Studio",business:"💼 Business",social:"📱 Social Media",writing:"✍️ Writing",education:"📚 Education",marketing:"📈 Marketing",prompts:"🧠 Prompt Maker",translation:"🌐 Translation"};
+const presets={
+youtube:[["40-sec Short","आज के लिए 40 सेकंड का नया YouTube Short बनाओ। Hook, voiceover, title, short description, English hashtags, tags और 9:16 thumbnail prompt दो।"],["10 Topics","Knowledge/mythology channel के लिए 10 नए Shorts topics और hooks दो।"]],
+advertising:[["Quotation","Outdoor advertising quotation का professional format बनाओ जिसमें location, size, duration, printing, installation, GST और terms हों।"],["Campaign","एक local brand के लिए outdoor campaign plan बनाओ।"]],
+business:[["Proposal","एक professional business proposal template बनाओ।"],["Follow-up","Client को quotation follow-up WhatsApp message लिखो।"]],
+social:[["7-day Calendar","7 दिन का Facebook/Instagram content calendar बनाओ।"],["Post","एक engaging social media post लिखो।"]],
+writing:[["Email","एक professional business email लिखो।"],["Application","एक formal Hindi application लिखो।"]],
+education:[["Explain","इस विषय को आसान भाषा में समझाओ: "],["Quiz","इस topic पर 10 MCQ with answers बनाओ: "]],
+marketing:[["Campaign Brief","एक measurable marketing campaign brief बनाओ।"],["Ad Copy","एक service के लिए 5 ad copy variants बनाओ।"]],
+prompts:[["Image Prompt","इस idea को detailed AI image prompt में बदलो: "],["Video Prompt","इस idea को detailed 9:16 AI video prompt में बदलो: "]],
+translation:[["Hindi→English","इस Hindi text का natural professional English translation करो: "],["English→Hindi","इस English text का natural Hindi translation करो: "]]
+};
+let mode="general",me=null;
+function showAuth(which){loginTab.classList.toggle("active",which==="login");signupTab.classList.toggle("active",which==="signup");loginBox.classList.toggle("hide",which!=="login");signupBox.classList.toggle("hide",which!=="signup");authMsg.textContent=""}
+async function post(url,body){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error(d.error||"Request failed");return d}
+async function login(){try{const d=await post("/api/login",{email:lemail.value,password:lpass.value});me=d.user;openApp()}catch(e){authMsg.textContent=e.message;authMsg.className="error"}}
+async function signup(){try{const d=await post("/api/signup",{name:sname.value,email:semail.value,password:spass.value});me=d.user;openApp()}catch(e){authMsg.textContent=e.message;authMsg.className="error"}}
+async function logout(){await post("/api/logout",{});location.reload()}
+function openApp(){auth.classList.add("hide");app.classList.remove("hide");welcome.textContent=`नमस्ते, ${me.name} 👋`;updateUsage(me);renderModes();renderPresets()}
+function updateUsage(u){usage.textContent=u.role==="admin"?"Admin • Unlimited":`${u.requestsUsed}/${u.requestLimit} requests this month`}
+function renderModes(){modesEl.innerHTML="";Object.entries(modes).forEach(([k,v])=>{let b=document.createElement("button");b.textContent=v;b.className=k===mode?"active":"";b.onclick=()=>{mode=k;renderModes();renderPresets()};modesEl.appendChild(b)})}
+function renderPresets(){presetsEl.innerHTML="";(presets[mode]||[]).forEach(([t,p])=>{let c=document.createElement("div");c.className="card";c.innerHTML=`<b>${t}</b><span class="small">${p}</span>`;c.onclick=()=>prompt.value=p;presetsEl.appendChild(c)})}
+async function ask(){const msg=prompt.value.trim();if(!msg)return alert("पहले सवाल/काम लिखें।");output.textContent="MKS AI सोच रहा है…";try{const d=await post("/api/chat",{message:msg,mode});output.textContent=d.answer;if(d.usage){me.requestsUsed=d.usage.used;updateUsage(me)}}catch(e){output.textContent="Error: "+e.message}}
+function clearAll(){prompt.value="";output.textContent="MKS AI तैयार है।"}
+function copyAnswer(){navigator.clipboard?.writeText(output.textContent)}
+function downloadAnswer(){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([output.textContent],{type:"text/plain;charset=utf-8"}));a.download="MKS_AI_Output.txt";a.click()}
+(async()=>{try{const r=await fetch("/api/me");const d=await r.json();if(d.user){me=d.user;openApp()}}catch{}})()
+</script>
+</body>
+</html>
