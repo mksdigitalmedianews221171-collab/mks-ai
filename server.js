@@ -179,4 +179,4 @@ const server=http.createServer(async(req,res)=>{
     return json(res,404,{error:"Not found"});
   }catch(e){console.error(e); return json(res,500,{error:e.message||"Server error"});}
 });
-server.listen(PORT,()=>console.log(`MKS AI Public running at http://localhost:${PORT}`));
+server.listen(PORT,"0.0.0.0",()=>console.log(`MKS AI Public running at http://0.0.0.0:${PORT}`));
