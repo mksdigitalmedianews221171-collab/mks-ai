@@ -66,7 +66,7 @@ async function logout(){await post("/api/logout",{});location.reload()}
 function openApp(){auth.classList.add("hide");app.classList.remove("hide");welcome.textContent=`नमस्ते, ${me.name} 👋`;updateUsage(me);renderModes();renderPresets()}
 function updateUsage(u){usage.textContent=u.role==="admin"?"Admin • Unlimited":`${u.requestsUsed}/${u.requestLimit} requests this month`}
 function renderModes(){modesEl.innerHTML="";Object.entries(modes).forEach(([k,v])=>{let b=document.createElement("button");b.textContent=v;b.className=k===mode?"active":"";b.onclick=()=>{mode=k;renderModes();renderPresets()};modesEl.appendChild(b)})}
-function renderPresets(){presetsEl.innerHTML="";(presets[mode]||[]).forEach(([t,p])=>{let c=document.createElement("div");c.className="card";c.innerHTML=`<b>${t}</b><span class="small">${p}</span>`;c.onclick=()=>document.getElementById("prompt").value=p>prompt.value=p;presetsEl.appendChild(c)})}
+function renderPresets(){presetsEl.innerHTML="";(presets[mode]||[]).forEach(([t,p])=>{let c=document.createElement("div");c.className="card";c.innerHTML=`<b>${t}</b><span class="small">${p}</span>`;c.onclick=()=>document.getElementById("prompt").value=p;presetsEl.appendChild(c)})}
 async function ask(){const msg=document.getElementById("prompt").value.trim();if(!msg)return alert("पहले सवाल/काम लिखें।");output.textContent="MKS AI सोच रहा है…";try{const d=await post("/api/chat",{message:msg,mode});output.textContent=d.answer;if(d.usage){me.requestsUsed=d.usage.used;updateUsage(me)}}catch(e){output.textContent="Error: "+e.message}}
 function clearAll(){document.getElementById("prompt").value="";output.textContent="MKS AI तैयार है।"}
 function copyAnswer(){navigator.clipboard?.writeText(output.textContent)}
