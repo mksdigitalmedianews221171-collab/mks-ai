@@ -111,15 +111,41 @@ function modePrompt(mode) {
 }
 async function askOpenAI(message,mode){
   if(!OPENAI_API_KEY) throw new Error("AI service is not configured.");
+
+  const needsWeb=/latest|today|aaj|abhi|current|live|news|weather|mausam|बारिश|आज|ताज़ा|ताजा|लेटेस्ट|न्यूज़|खबर/i.test(message);
+
+  const body={
+    model:"gpt-5.6-luna",
+    instructions:modePrompt(mode),
+    input:message
+  };
+
+  if(needsWeb){
+    body.tools=[{type:"web_search"}];
+  }
+
   const r=await fetch("https://api.openai.com/v1/responses",{
-    method:"POST",headers:{"Content-Type":"application/json","Authorization":`Bearer ${OPENAI_API_KEY}`},
-    body:JSON.stringify({model:"gpt-5.6-luna",instructions:modePrompt(mode),input:message})
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "Authorization":`Bearer ${OPENAI_API_KEY}`
+    },
+    body:JSON.stringify(body)
   });
+
   const data=await r.json();
+
   if(!r.ok) throw new Error(data.error?.message||"AI request failed");
-  const text=(data.output||[]).flatMap(x=>Array.isArray(x.content)?x.content:[])
-    .filter(x=>x.type==="output_text"&&typeof x.text==="string").map(x=>x.text).join("\n").trim();
+
+  const text=(data.output||[])
+    .flatMap(x=>Array.isArray(x.content)?x.content:[])
+    .filter(x=>x.type==="output_text"&&typeof x.text==="string")
+    .map(x=>x.text)
+    .join("\n")
+    .trim();
+
   if(!text) throw new Error("No response text returned.");
+
   return text;
 }
 
