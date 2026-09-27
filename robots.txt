@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
-
+Content-Signal: search=yes, ai-train=no
 Sitemap: https://mksai.in/sitemap.xml
